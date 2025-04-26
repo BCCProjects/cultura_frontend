@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/models/local.dart';
 import '../../../providers/locais_provider.dart';
 import '../../../providers/auth_provider.dart';
+import '../local_detail_screen.dart';
 
 class LocalCard extends ConsumerWidget {
   final Local local;
@@ -26,11 +27,18 @@ class LocalCard extends ConsumerWidget {
             color: local.isFavorito ? Colors.red : null,
           ),
           onPressed: logged
-              ? () => ref
-              .read(locaisProvider.notifier)
-              .toggleFavorito(local)
+              ? () => ref.read(locaisProvider.notifier).toggleFavorito(local)
               : null,
         ),
+        // AQUI É O PULO DO GATO
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => LocalDetailScreen(local: local),
+            ),
+          );
+        },
       ),
     );
   }
