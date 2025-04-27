@@ -20,7 +20,7 @@ class LocalCard extends ConsumerWidget {
             width: 60, height: 60, fit: BoxFit.cover)
             : const Icon(Icons.photo, size: 40),
         title: Text(local.nome),
-        subtitle: Text(local.tipo),
+        subtitle: Text(local.tipo[0].toUpperCase() + local.tipo.substring(1)),
         trailing: IconButton(
           icon: Icon(
             local.isFavorito ? Icons.favorite : Icons.favorite_border,

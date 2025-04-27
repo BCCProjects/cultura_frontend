@@ -4,6 +4,9 @@ import '../core/services/api_service.dart';
 import '../core/config.dart';
 import 'auth_provider.dart';
 
+String? _q; int? _cidade; int? _estado;
+
+
 final locaisProvider =
 StateNotifierProvider<LocaisNotifier, AsyncValue<List<Local>>>(
         (ref) => LocaisNotifier(ref));
@@ -14,18 +17,23 @@ class LocaisNotifier extends StateNotifier<AsyncValue<List<Local>>> {
     fetchLocais();
   }
 
-  Future<void> fetchLocais() async {
+  Future<void> fetchLocais({String? busca, int? cidade, int? estado}) async {
+    _q = busca; _cidade = cidade; _estado = estado;
     try {
-      final res = await ApiService.instance.client.get(kApiLocais);
-      final locais = (res.data as List)
-          .map((e) => Local.fromJson(e))
-          .toList(growable: false);
+      final query = <String, dynamic>{
+        if (_q != null && _q!.isNotEmpty) 'search': _q,
+        if (_cidade != null) 'cidade': _cidade,
+        if (_estado != null) 'estado': _estado,
+      };
+      final res = await ApiService.instance.client.get(kApiLocais, queryParameters: query);
+      final locais = (res.data as List).map((e) => Local.fromJson(e)).toList(growable: false);
       await _marcarFavoritos(locais);
       state = AsyncData(locais);
     } catch (e, st) {
       state = AsyncError(e, st);
     }
   }
+  Future<void> refresh() => fetchLocais(busca: _q, cidade: _cidade, estado: _estado);
 
   Future<void> _marcarFavoritos(List<Local> locais) async {
     final token = ref.read(authProvider).token;
@@ -55,4 +63,5 @@ class LocaisNotifier extends StateNotifier<AsyncValue<List<Local>>> {
       }
     }
   }
+
 }

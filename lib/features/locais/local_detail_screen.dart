@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:carousel_slider/carousel_slider.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import '../../../core/models/local.dart';
 
@@ -12,20 +13,26 @@ class LocalDetailScreen extends StatelessWidget {
       appBar: AppBar(title: Text(local.nome)),
       body: ListView(
         children: [
-          // Galeria simples
+          // Carrossel de imagens
           SizedBox(
             height: 220,
             child: local.imagens.isEmpty
                 ? const Center(child: Icon(Icons.photo, size: 80))
-                : PageView(
-              children: local.imagens
+                : CarouselSlider(
+              options: CarouselOptions(
+                height: 220,
+                viewportFraction: 1,
+                enableInfiniteScroll: false,
+              ),
+              items: local.imagens
                   .map((url) => Image.network(url, fit: BoxFit.cover))
                   .toList(),
             ),
           ),
           ListTile(
             title: const Text('Tipo'),
-            subtitle: Text(local.tipo),
+            subtitle:
+            Text(local.tipo[0].toUpperCase() + local.tipo.substring(1)),
           ),
           ListTile(
             title: const Text('Descrição'),

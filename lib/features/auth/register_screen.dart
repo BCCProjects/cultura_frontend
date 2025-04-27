@@ -1,20 +1,41 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dio/dio.dart';
+
 import '../../core/config.dart';
 import '../../core/services/api_service.dart';
 import '../../providers/auth_provider.dart';
 
 class RegisterScreen extends ConsumerStatefulWidget {
   const RegisterScreen({Key? key}) : super(key: key);
+
   @override
   ConsumerState<RegisterScreen> createState() => _RegisterScreenState();
 }
 
 class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   final _form = GlobalKey<FormState>();
-  late String _u, _e, _p;
-  bool _load = false;
+
+  // controladores – evitam problemas de “onSaved” fora de ordem
+  final _user = TextEditingController();
+  final _email = TextEditingController();
+  final _pwd1 = TextEditingController();
+  final _pwd2 = TextEditingController();
+  final _cidade = TextEditingController();
+  final _estado = TextEditingController();
+
+  bool _busy = false;
+
+  @override
+  void dispose() {
+    _user.dispose();
+    _email.dispose();
+    _pwd1.dispose();
+    _pwd2.dispose();
+    _cidade.dispose();
+    _estado.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -26,30 +47,34 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
           key: _form,
           child: Column(
             children: [
-              TextFormField(
-                decoration: const InputDecoration(labelText: 'Usuário'),
-                onSaved: (v) => _u = v!.trim(),
-                validator: (v) => v == null || v.isEmpty ? 'Obrigatório' : null,
-              ),
+              _input('Usuário', _user,
+                  validator: _required,
+                  textCapitalization: TextCapitalization.none),
               const SizedBox(height: 16),
-              TextFormField(
-                decoration: const InputDecoration(labelText: 'E‑mail'),
-                onSaved: (v) => _e = v!.trim(),
-              ),
+              _input('E-mail', _email,
+                  keyboardType: TextInputType.emailAddress,
+                  validator: (v) =>
+                  v != null && v.contains('@') ? null : 'E-mail inválido'),
               const SizedBox(height: 16),
-              TextFormField(
-                decoration: const InputDecoration(labelText: 'Senha'),
-                obscureText: true,
-                onSaved: (v) => _p = v!,
-                validator: (v) =>
-                v != null && v.length >= 4 ? null : 'Mínimo 4',
-              ),
+              _input('Senha', _pwd1,
+                  obscure: true,
+                  validator: (v) =>
+                  v != null && v.length >= 4 ? null : 'Mínimo 4'),
+              const SizedBox(height: 16),
+              _input('Confirmar senha', _pwd2,
+                  obscure: true,
+                  validator: (v) =>
+                  v == _pwd1.text ? null : 'Senhas não coincidem'),
+              const SizedBox(height: 16),
+              _input('Estado (sigla ex: SP)', _estado, validator: _required),
+              const SizedBox(height: 16),
+              _input('Cidade', _cidade, validator: _required),
               const SizedBox(height: 32),
-              _load
+              _busy
                   ? const CircularProgressIndicator()
                   : ElevatedButton(
                 onPressed: _submit,
-                child: const Text('Registrar'),
+                child: const Text('Registrar e entrar'),
               ),
             ],
           ),
@@ -58,27 +83,50 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     );
   }
 
+  String? _required(String? v) =>
+      v == null || v.trim().isEmpty ? 'Obrigatório' : null;
+
+  Widget _input(String label, TextEditingController c,
+      {bool obscure = false,
+        String? Function(String?)? validator,
+        TextInputType keyboardType = TextInputType.text,
+        TextCapitalization textCapitalization = TextCapitalization.words}) =>
+      TextFormField(
+        controller: c,
+        decoration: InputDecoration(labelText: label),
+        obscureText: obscure,
+        validator: validator,
+        keyboardType: keyboardType,
+        textCapitalization: textCapitalization,
+      );
+
   Future<void> _submit() async {
     if (!_form.currentState!.validate()) return;
-    _form.currentState!.save();
-    setState(() => _load = true);
+    setState(() => _busy = true);
     try {
-      // cria usuário
-      await ApiService.instance.client.post(
-        kApiRegistro,
-        data: {'username': _u, 'email': _e, 'password': _p},
-      );
+      // cadastro
+      await ApiService.instance.client.post(kApiRegistro, data: {
+        'username': _user.text.trim(),
+        'email': _email.text.trim(),
+        'password': _pwd1.text,
+        'cidade': _cidade.text.trim(),
+        'estado': _estado.text.trim(),
+      });
+
       // login automático
-      await ref.read(authProvider.notifier).login(_u, _p);
+      await ref
+          .read(authProvider.notifier)
+          .login(_user.text.trim(), _pwd1.text);
+
       if (mounted) Navigator.pushReplacementNamed(context, '/locals');
     } on DioError catch (e) {
-      final m = e.response?.data.toString() ?? e.message;
+      final msg = e.response?.data.toString() ?? e.message;
       if (mounted) {
         ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('Erro: $m')));
+            .showSnackBar(SnackBar(content: Text('Erro: $msg')));
       }
     } finally {
-      if (mounted) setState(() => _load = false);
+      if (mounted) setState(() => _busy = false);
     }
   }
 }
