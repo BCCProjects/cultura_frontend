@@ -7,6 +7,14 @@ class Local {
   final double longitude;
   final List<String> imagens;
 
+  final String? cidade;
+  final String? estado;
+
+  final String? endereco;
+  final String? bairro;
+  final String? horarioFuncionamento;
+  final String? linkExterno;
+
   bool isFavorito;
 
   Local({
@@ -17,19 +25,40 @@ class Local {
     required this.latitude,
     required this.longitude,
     required this.imagens,
+    this.cidade,
+    this.estado,
+    this.endereco,
+    this.bairro,
+    this.horarioFuncionamento,
+    this.linkExterno,
     this.isFavorito = false,
   });
 
-  factory Local.fromJson(Map<String, dynamic> j) => Local(
-    id: j['id'],
-    nome: j['nome'],
-    tipo: j['tipo'],
-    descricao: j['descricao'] ?? '',
-    latitude: (j['latitude'] as num).toDouble(),
-    longitude: (j['longitude'] as num).toDouble(),
-    imagens: (j['imagens'] as List<dynamic>?)
-        ?.map((i) => i['arquivo'] as String)
-        .toList() ??
-        [],
-  );
+  factory Local.fromJson(Map<String, dynamic> j) {
+    final cidadeNome = j['cidade_nome'] as String?;
+    final estadoSigla = j['estado_sigla'] as String?;
+
+    final imagensJson = j['imagens'] as List<dynamic>?;
+    final imagensList = imagensJson != null
+        ? imagensJson
+        .map((i) => (i as Map<String, dynamic>)['arquivo'] as String)
+        .toList()
+        : <String>[];
+
+    return Local(
+      id: j['id'] as int,
+      nome: j['nome'] as String,
+      tipo: j['tipo'] as String,
+      descricao: (j['descricao'] as String?) ?? '',
+      latitude: (j['latitude'] as num).toDouble(),
+      longitude: (j['longitude'] as num).toDouble(),
+      imagens: imagensList,
+      cidade: cidadeNome,
+      estado: estadoSigla,
+      endereco: j['endereco'] as String?,
+      bairro: j['bairro'] as String?,
+      horarioFuncionamento: j['horario_funcionamento'] as String?,
+      linkExterno: j['link_externo'] as String?,
+    );
+  }
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'main_tabs.dart';
 import 'providers/auth_provider.dart';
 import 'features/auth/login_screen.dart';
 import 'features/auth/register_screen.dart';
@@ -40,7 +41,7 @@ class CulturaApp extends ConsumerWidget {
       },
       home: auth.token == null
           ? const LoginScreen()
-          : const LocalListScreen(),
+          : const MainTabs(),
     );
   }
 }

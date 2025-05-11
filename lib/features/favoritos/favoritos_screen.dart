@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../providers/favoritos_provider.dart';
+import '../../providers/locais_provider.dart';
 import '../locais/widgets/local_card.dart';
 
 class FavoritosScreen extends ConsumerWidget {
@@ -8,17 +8,22 @@ class FavoritosScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final favs = ref.watch(favoritosProvider);
+    final locaisAsync = ref.watch(locaisProvider);
 
     return Scaffold(
       appBar: AppBar(title: const Text('Meus favoritos')),
-      body: favs.when(
-        data: (list) => list.isEmpty
-            ? const Center(child: Text('Nenhum favorito'))
-            : ListView.builder(
-          itemCount: list.length,
-          itemBuilder: (_, i) => LocalCard(local: list[i]),
-        ),
+      body: locaisAsync.when(
+        data: (list) {
+          // só pega os que já estão marcados como favoritos
+          final favs = list.where((l) => l.isFavorito).toList();
+          if (favs.isEmpty) {
+            return const Center(child: Text('Nenhum favorito'));
+          }
+          return ListView.builder(
+            itemCount: favs.length,
+            itemBuilder: (_, i) => LocalCard(local: favs[i]),
+          );
+        },
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('Erro: $e')),
       ),
