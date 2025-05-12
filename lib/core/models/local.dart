@@ -40,10 +40,14 @@ class Local {
 
     final imagensJson = j['imagens'] as List<dynamic>?;
     final imagensList = imagensJson != null
-        ? imagensJson
-        .map((i) => (i as Map<String, dynamic>)['arquivo'] as String)
-        .toList()
+        ? imagensJson.map((i) {
+      final url = i['arquivo'] as String;
+      return url.startsWith('http')
+          ? url
+          : 'https://cultura-backend-riqt.onrender.com$url';
+    }).toList()
         : <String>[];
+
 
     return Local(
       id: j['id'] as int,
