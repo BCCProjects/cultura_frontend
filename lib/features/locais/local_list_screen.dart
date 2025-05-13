@@ -158,11 +158,11 @@ class _LocalListScreenState extends ConsumerState<LocalListScreen> {
                       : todosLocais.where((l) => l.tipo == _selectedType).toList();
 
                   if (filtrados.isEmpty) {
-                    return Center(
+                    return SizedBox.expand(
                       child: Column(
-                        mainAxisSize: MainAxisSize.min,
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Lottie.asset('/lottie/cultural_empty.json', width: 200, height: 200, fit: BoxFit.contain, repeat: false),
+                          Lottie.asset('assets/lottie/cultural_empty.json', width: 200, height: 200, fit: BoxFit.contain, repeat: false),
                           const SizedBox(height: 16),
                           const Text('Nenhum local encontrado', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
                         ],

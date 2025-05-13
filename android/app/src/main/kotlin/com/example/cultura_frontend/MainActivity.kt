@@ -1,4 +1,4 @@
-package com.example.cultura_frontend
+package br.unisagrado.cultura_frontend
 
 import io.flutter.embedding.android.FlutterActivity
 
