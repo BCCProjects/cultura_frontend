@@ -107,7 +107,9 @@ class _LocalDetailScreenState extends State<LocalDetailScreen> {
           height: isActive ? 10 : 8,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: isActive ? Colors.blueAccent : Colors.grey[400],
+            color: isActive
+                ? Theme.of(context).colorScheme.primary
+                : Theme.of(context).colorScheme.outline,
           ),
         );
       }),

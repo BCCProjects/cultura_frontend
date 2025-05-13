@@ -59,7 +59,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     _form.currentState!.save();
     try {
       await ref.read(authProvider.notifier).login(_u, _p);
-      if (mounted) Navigator.pushReplacementNamed(context, '/locals');
+      if (mounted) Navigator.pushReplacementNamed(context, '/home');
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context)

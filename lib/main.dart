@@ -19,25 +19,38 @@ class CulturaApp extends ConsumerWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: true,
-        colorSchemeSeed: Colors.deepPurple,
+        fontFamily: 'Roboto',
+        scaffoldBackgroundColor: Color(0xfff5f5f5),
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: Color(0xff016343),
+          primary: Color(0xff016343),
+          secondary: Color(0xff47c66a),
+          onPrimary: Colors.white,
+          onSecondary: Colors.black,
+          background: Color(0xfffaf3e8),
+          surface: Colors.white,
+        ),
         inputDecorationTheme: InputDecorationTheme(
           filled: true,
-          fillColor: Colors.grey[100],
+          fillColor: Colors.white,
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(12),
             borderSide: BorderSide.none,
           ),
         ),
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
+            backgroundColor: Color(0xff016343),
+            foregroundColor: Colors.white,
             minimumSize: const Size.fromHeight(48),
-            shape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           ),
         ),
       ),
       routes: {
-        '/register': (_) => const RegisterScreen(),
+        '/login': (context) => const LoginScreen(),
+        '/register': (context) => const RegisterScreen(),
+        '/home': (context) => const MainTabs(),
       },
       home: auth.token == null
           ? const LoginScreen()
