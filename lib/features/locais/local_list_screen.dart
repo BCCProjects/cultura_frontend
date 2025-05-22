@@ -1,5 +1,6 @@
 // lib/features/locais/local_list_screen.dart
 import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/locais_provider.dart';
@@ -26,6 +27,7 @@ class _LocalListScreenState extends ConsumerState<LocalListScreen> {
   String? _selectedType;
   bool _isLoading = false;
 
+  /// Tipos de locais exibidos nos chips
   static const tipos = [
     {'value': 'museu', 'label': 'Museu'},
     {'value': 'teatro', 'label': 'Teatro'},
@@ -41,6 +43,8 @@ class _LocalListScreenState extends ConsumerState<LocalListScreen> {
   @override
   void initState() {
     super.initState();
+
+    /// Dispara o carregamento inicial dos dados
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(locaisProvider.notifier).refresh();
       ref.read(estadosProvider);
@@ -63,28 +67,46 @@ class _LocalListScreenState extends ConsumerState<LocalListScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Cabeçalho
+            /// --------------------------------------------------------------------------------
+            /// Cabeçalho
+            /// --------------------------------------------------------------------------------
             Padding(
               padding: const EdgeInsets.all(16),
               child: Row(
                 children: [
-                  Image.asset('assets/images/Cultivi.png', width: 60, height: 60),
+                  Image.asset(
+                    'assets/images/Cultivi.png',
+                    width: 60,
+                    height: 60,
+                  ),
                   const SizedBox(width: 12),
                   const Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Cultivi', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                        Text('Explore espaços culturais da sua cidade', style: TextStyle(fontSize: 14)),
+                        Text(
+                          'Cultivi',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        Text(
+                          'Explore espaços culturais da sua cidade',
+                          style: TextStyle(fontSize: 14),
+                        ),
                       ],
                     ),
                   ),
                   IconButton(
                     icon: const Icon(Icons.favorite),
+                    tooltip: 'Favoritos',
                     onPressed: () async {
                       await Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (_) => const FavoritosScreen()),
+                        MaterialPageRoute(
+                          builder: (_) => const FavoritosScreen(),
+                        ),
                       );
                       ref.read(locaisProvider.notifier).refresh();
                     },
@@ -94,14 +116,18 @@ class _LocalListScreenState extends ConsumerState<LocalListScreen> {
                     tooltip: 'Sair',
                     onPressed: () async {
                       await ref.read(authProvider.notifier).logout();
-                      if (mounted) Navigator.pushReplacementNamed(context, '/login');
+                      if (mounted) {
+                        Navigator.pushReplacementNamed(context, '/login');
+                      }
                     },
                   ),
                 ],
               ),
             ),
 
-            // Busca
+            /// --------------------------------------------------------------------------------
+            /// Campo de busca
+            /// --------------------------------------------------------------------------------
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: TextField(
@@ -110,17 +136,26 @@ class _LocalListScreenState extends ConsumerState<LocalListScreen> {
                 decoration: InputDecoration(
                   hintText: 'Pesquisar...',
                   prefixIcon: const Icon(Icons.search, color: Color(0xff016343)),
-                  suffixIcon: IconButton(icon: const Icon(Icons.filter_list), onPressed: _abrirFiltro),
+                  suffixIcon: IconButton(
+                    icon: const Icon(Icons.filter_list),
+                    tooltip: 'Filtros',
+                    onPressed: _abrirFiltro,
+                  ),
                   filled: true,
                   fillColor: Colors.white,
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
                   contentPadding: const EdgeInsets.symmetric(vertical: 0),
                 ),
               ),
             ),
             const SizedBox(height: 8),
 
-            // Chips de tipo
+            /// --------------------------------------------------------------------------------
+            /// Chips de tipos de locais
+            /// --------------------------------------------------------------------------------
             SizedBox(
               height: 48,
               child: ListView.separated(
@@ -130,7 +165,7 @@ class _LocalListScreenState extends ConsumerState<LocalListScreen> {
                 separatorBuilder: (_, __) => const SizedBox(width: 8),
                 itemBuilder: (_, i) {
                   final tipo = tipos[i];
-                  final selected = tipo['value'] == _selectedType;
+                  final bool selected = tipo['value'] == _selectedType;
                   return ChoiceChip(
                     label: Text(tipo['label']!),
                     selected: selected,
@@ -144,59 +179,105 @@ class _LocalListScreenState extends ConsumerState<LocalListScreen> {
             ),
             const SizedBox(height: 8),
 
-            // Lista de locais
+            /// --------------------------------------------------------------------------------
+            /// Lista / carrossel de locais
+            /// --------------------------------------------------------------------------------
             Expanded(
               child: _isLoading
                   ? const Center(child: CircularProgressIndicator())
                   : locaisAsync.when(
-                loading: () => const Center(child: CircularProgressIndicator()),
+                loading: () =>
+                const Center(child: CircularProgressIndicator()),
                 error: (e, _) => Center(child: Text('Erro: $e')),
                 data: (todosLocais) {
-                  // Aplica filtro de tipo
-                  final filtrados = _selectedType == null
-                      ? todosLocais
-                      : todosLocais.where((l) => l.tipo == _selectedType).toList();
+                  /// Remove duplicidades vindas do provider
+                  final seenIds = <int>{};
+                  final semDuplicatas =
+                  todosLocais.where((l) => seenIds.add(l.id)).toList();
 
+                  /// Filtra por tipo, quando selecionado
+                  final filtrados = _selectedType == null
+                      ? semDuplicatas
+                      : semDuplicatas
+                      .where((l) => l.tipo == _selectedType)
+                      .toList();
+
+                  /// Nenhum resultado – exibe animação
                   if (filtrados.isEmpty) {
                     return SizedBox.expand(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Lottie.asset('assets/lottie/cultural_empty.json', width: 200, height: 200, fit: BoxFit.contain, repeat: false),
+                          Lottie.asset(
+                            'assets/lottie/cultural_empty.json',
+                            width: 200,
+                            height: 200,
+                            fit: BoxFit.contain,
+                            repeat: false,
+                          ),
                           const SizedBox(height: 16),
-                          const Text('Nenhum local encontrado', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+                          const Text(
+                            'Nenhum local encontrado',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
                         ],
                       ),
                     );
                   }
 
-                  // Se houver filtro de tipo ativo, todos grandes
+                  /// ----------------------------------------------------
+                  /// Modo “detalhe” (cards grandes) quando filtrado por tipo
+                  /// ----------------------------------------------------
                   if (_selectedType != null) {
                     return RefreshIndicator(
-                      onRefresh: () => ref.read(locaisProvider.notifier).refresh(),
+                      onRefresh: () async =>
+                          ref.read(locaisProvider.notifier).refresh(),
                       child: ListView.builder(
                         padding: const EdgeInsets.only(bottom: 16),
                         itemCount: filtrados.length,
                         itemBuilder: (_, i) => Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                          child: LocalCard(local: filtrados[i], large: true),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 8,
+                          ),
+                          child: LocalCard(
+                            local: filtrados[i],
+                            large: true,
+                          ),
                         ),
                       ),
                     );
                   }
 
-                  // Sem filtro de tipo: mantém carousel + lista padrão
+                  /// ----------------------------------------------------
+                  /// Modo “home” padrão – carrossel + lista
+                  /// ----------------------------------------------------
                   return RefreshIndicator(
-                    onRefresh: () => ref.read(locaisProvider.notifier).refresh(),
+                    onRefresh: () async =>
+                        ref.read(locaisProvider.notifier).refresh(),
                     child: ListView(
                       padding: const EdgeInsets.only(bottom: 16),
                       children: [
+                        /// Carrossel só quando houver 3 ou mais itens
                         if (filtrados.length >= 3)
-                          LocalCarousel(locais: filtrados.take(3).toList()),
-                        const SizedBox(height: 8),
-                        for (final local in filtrados.skip(3))
+                          LocalCarousel(
+                            locais: filtrados.take(3).toList(),
+                          ),
+                        if (filtrados.length >= 3)
+                          const SizedBox(height: 8),
+
+                        /// Lista dos demais (ou todos, caso < 3)
+                        for (final local
+                        in filtrados.skip(
+                            filtrados.length >= 3 ? 3 : 0))
                           Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 8,
+                            ),
                             child: LocalCard(local: local),
                           ),
                       ],
@@ -211,9 +292,17 @@ class _LocalListScreenState extends ConsumerState<LocalListScreen> {
     );
   }
 
+  /* ──────────────────────────────────────────────────────────────────────────
+   * Handlers
+   * ──────────────────────────────────────────────────────────────────────────
+   */
+
   void _onSearchChanged(String _) {
     _debounce?.cancel();
-    _debounce = Timer(const Duration(milliseconds: 500), _filtrar);
+    _debounce = Timer(const Duration(milliseconds: 500), () {
+      if (!mounted) return;
+      _filtrar();
+    });
   }
 
   Future<void> _abrirFiltro() async {
@@ -223,69 +312,134 @@ class _LocalListScreenState extends ConsumerState<LocalListScreen> {
       builder: (ctx) {
         int? selEstado = _estadoId;
         int? selCidade = _cidadeId;
+
         return Padding(
-          padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom + 16, left: 24, right: 24, top: 24),
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(ctx).viewInsets.bottom + 16,
+            left: 24,
+            right: 24,
+            top: 24,
+          ),
           child: StatefulBuilder(
             builder: (ctx2, setModal) {
               final estadosAsync = ref.watch(estadosProvider);
+
               return SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Text('Filtrar por', style: TextStyle(fontSize: 18)),
+                    const Text(
+                      'Filtrar por',
+                      style: TextStyle(fontSize: 18),
+                    ),
                     const SizedBox(height: 16),
                     estadosAsync.when(
-                      loading: () => const SizedBox(height: 100, child: Center(child: CircularProgressIndicator())),
+                      loading: () => const SizedBox(
+                        height: 100,
+                        child: Center(child: CircularProgressIndicator()),
+                      ),
                       error: (e, _) => Text('Erro: $e'),
                       data: (listaEstados) => Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
+                          /// ---------------------------------------------------
+                          /// Dropdown de Estados
+                          /// ---------------------------------------------------
                           DropdownButtonFormField<int>(
                             value: selEstado,
-                            decoration: const InputDecoration(labelText: 'Estado'),
-                            items: listaEstados.map((e) => DropdownMenuItem(value: e.id, child: Text('${e.sigla} – ${e.nome}'))).toList(),
-                            onChanged: (v) => setModal(() { selEstado = v; selCidade = null; }),
+                            decoration:
+                            const InputDecoration(labelText: 'Estado'),
+                            items: listaEstados
+                                .map(
+                                  (e) => DropdownMenuItem(
+                                value: e.id,
+                                child: Text('${e.sigla} – ${e.nome}'),
+                              ),
+                            )
+                                .toList(),
+                            onChanged: (v) => setModal(() {
+                              selEstado = v;
+                              selCidade = null; // zera cidade se estado mudar
+                            }),
                           ),
                           const SizedBox(height: 16),
+
+                          /// ---------------------------------------------------
+                          /// Dropdown de Cidades (carrega sob demanda)
+                          /// ---------------------------------------------------
                           if (selEstado != null)
-                            Consumer(builder: (_, ref2, __) {
-                              final cidadesAsync = ref2.watch(cidadesPorEstadoProvider(selEstado!));
-                              return cidadesAsync.when(
-                                loading: () => const LinearProgressIndicator(),
-                                error: (e, _) => Text('Erro: $e'),
-                                data: (listaCidades) => DropdownButtonFormField<int>(
-                                  value: selCidade,
-                                  decoration: const InputDecoration(labelText: 'Cidade'),
-                                  items: listaCidades.map((c) => DropdownMenuItem(value: c.id, child: Text(c.nome))).toList(),
-                                  onChanged: (v) => setModal(() => selCidade = v),
-                                ),
-                              );
-                            }),
+                            Consumer(
+                              builder: (_, ref2, __) {
+                                final cidadesAsync = ref2.watch(
+                                  cidadesPorEstadoProvider(selEstado!),
+                                );
+
+                                return cidadesAsync.when(
+                                  loading: () =>
+                                  const LinearProgressIndicator(),
+                                  error: (e, _) => Text('Erro: $e'),
+                                  data: (listaCidades) => DropdownButtonFormField<
+                                      int>(
+                                    value: selCidade,
+                                    decoration: const InputDecoration(
+                                        labelText: 'Cidade'),
+                                    items: listaCidades
+                                        .map(
+                                          (c) => DropdownMenuItem(
+                                        value: c.id,
+                                        child: Text(c.nome),
+                                      ),
+                                    )
+                                        .toList(),
+                                    onChanged: (v) =>
+                                        setModal(() => selCidade = v),
+                                  ),
+                                );
+                              },
+                            ),
                           const SizedBox(height: 24),
+
+                          /// ---------------------------------------------------
+                          /// Ações
+                          /// ---------------------------------------------------
                           Row(
                             children: [
+                              /// Botão Aplicar
                               Expanded(
                                 child: ElevatedButton(
                                   onPressed: () {
                                     Navigator.pop(ctx);
-                                    setState(() { _estadoId = selEstado; _cidadeId = selCidade; });
+                                    setState(() {
+                                      _estadoId = selEstado;
+                                      _cidadeId = selCidade;
+                                    });
                                     _filtrar();
                                   },
                                   child: const Text('Aplicar'),
                                 ),
                               ),
                               const SizedBox(width: 12),
+
+                              /// Botão Limpar
                               Expanded(
                                 child: ElevatedButton.icon(
                                   icon: const Icon(Icons.clear),
                                   label: const Text('Limpar filtros'),
                                   style: ElevatedButton.styleFrom(
-                                    backgroundColor: Theme.of(context).colorScheme.secondaryContainer,
-                                    foregroundColor: Theme.of(context).colorScheme.onSecondaryContainer,
+                                    backgroundColor: Theme.of(context)
+                                        .colorScheme
+                                        .secondaryContainer,
+                                    foregroundColor: Theme.of(context)
+                                        .colorScheme
+                                        .onSecondaryContainer,
                                   ),
                                   onPressed: () {
                                     Navigator.pop(ctx);
-                                    setState(() { _estadoId = null; _cidadeId = null; _selectedType = null; });
+                                    setState(() {
+                                      _estadoId = null;
+                                      _cidadeId = null;
+                                      _selectedType = null;
+                                    });
                                     _filtrar();
                                   },
                                 ),
@@ -305,9 +459,20 @@ class _LocalListScreenState extends ConsumerState<LocalListScreen> {
     );
   }
 
+  /// Faz a chamada ao provider para trazer/filtrar os locais
   Future<void> _filtrar() async {
+    if (!mounted) return;
+
     setState(() => _isLoading = true);
-    await ref.read(locaisProvider.notifier).fetchLocais(busca: _busca.text.trim(), cidade: _cidadeId, estado: _estadoId);
+
+    final textoBusca = _busca.text.trim();
+    await ref.read(locaisProvider.notifier).fetchLocais(
+      busca: textoBusca.isNotEmpty ? textoBusca : null,
+      cidade: _cidadeId,
+      estado: _estadoId,
+    );
+
+    if (!mounted) return;
     setState(() => _isLoading = false);
   }
 }

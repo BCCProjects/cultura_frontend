@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dio/dio.dart';
@@ -20,17 +21,18 @@ class RegisterScreen extends ConsumerStatefulWidget {
 class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   final _formKey = GlobalKey<FormState>();
 
-  // Controladores de texto
+  // Controllers
   final _usernameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
 
-  // Seleções
   Estado? _estadoSelecionado;
   Cidade? _cidadeSelecionada;
 
   bool _busy = false;
+  bool _showPassword = false;
+  bool _showConfirmPassword = false;
 
   @override
   void dispose() {
@@ -49,134 +51,263 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
         : const AsyncValue.data(<Cidade>[]);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Criar conta')),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            children: [
-              _buildInput('Usuário', _usernameController, validator: _required),
-              const SizedBox(height: 16),
-              _buildInput('E-mail', _emailController,
-                  keyboardType: TextInputType.emailAddress,
-                  validator: (v) => v != null && v.contains('@') ? null : 'E-mail inválido'),
-              const SizedBox(height: 16),
-              _buildInput('Senha', _passwordController,
-                  obscure: true, validator: (v) => v != null && v.length >= 4 ? null : 'Mínimo 4'),
-              const SizedBox(height: 16),
-              _buildInput('Confirmar senha', _confirmPasswordController,
-                  obscure: true, validator: (v) => v == _passwordController.text ? null : 'Senhas não coincidem'),
-              const SizedBox(height: 16),
-
-              // Dropdown de estados
-              estadosAsync.when(
-                data: (estados) => DropdownButtonFormField<Estado>(
-                  value: _estadoSelecionado,
-                  items: estados.map<DropdownMenuItem<Estado>>((e) {
-                    return DropdownMenuItem<Estado>(
-                      value: e,
-                      child: Text('${e.nome} (${e.sigla})'),
-                    );
-                  }).toList(),
-                  onChanged: (estado) {
-                    setState(() {
-                      _estadoSelecionado = estado;
-                      _cidadeSelecionada = null;
-                    });
-                  },
-                  decoration: const InputDecoration(labelText: 'Estado'),
-                  validator: (v) => v == null ? 'Obrigatório' : null,
-                ),
-                loading: () => const CircularProgressIndicator(),
-                error: (e, _) => Text('Erro ao carregar estados: $e'),
-              ),
-              const SizedBox(height: 16),
-
-              // Dropdown de cidades
-              cidadesAsync.when(
-                data: (cidades) => DropdownButtonFormField<Cidade>(
-                  value: _cidadeSelecionada,
-                  items: cidades.map<DropdownMenuItem<Cidade>>((c) {
-                    return DropdownMenuItem<Cidade>(
-                      value: c,
-                      child: Text(c.nome),
-                    );
-                  }).toList(),
-                  onChanged: (cidade) {
-                    setState(() => _cidadeSelecionada = cidade);
-                  },
-                  decoration: const InputDecoration(labelText: 'Cidade'),
-                  validator: (v) => v == null ? 'Obrigatório' : null,
-                ),
-                loading: () => const CircularProgressIndicator(),
-                error: (e, _) => Text('Erro ao carregar cidades: $e'),
-              ),
-              const SizedBox(height: 32),
-
-              _busy
-                  ? const CircularProgressIndicator()
-                  : ElevatedButton(
-                onPressed: _submit,
-                child: const Text('Registrar e entrar'),
-              ),
-            ],
+      body: Stack(
+        children: [
+          // Background image, blur e overlay (igual ao login)
+          Positioned.fill(
+            child: Image.asset('images/screen.png', fit: BoxFit.cover),
           ),
-        ),
+          Positioned.fill(
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+              child: Container(color: Colors.transparent),
+            ),
+          ),
+          Positioned.fill(
+            child: Container(color: const Color(0xFF013F48).withOpacity(0.4)),
+          ),
+
+          // Conteúdo
+          Center(
+            child: SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Card(
+                  elevation: 4,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Form(
+                      key: _formKey,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Text(
+                            'Crie sua conta',
+                            style: Theme.of(context).textTheme.titleLarge,
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 24),
+
+                          // Usuário
+                          _buildInput(
+                            'Usuário',
+                            controller: _usernameController,
+                            validator: _required,
+                          ),
+                          const SizedBox(height: 16),
+
+                          // E-mail
+                          _buildInput(
+                            'E-mail',
+                            controller: _emailController,
+                            keyboardType: TextInputType.emailAddress,
+                            validator: (v) => v != null && v.contains('@')
+                                ? null
+                                : 'E-mail inválido',
+                          ),
+                          const SizedBox(height: 16),
+
+                          // Senha
+                          _buildInput(
+                            'Senha',
+                            controller: _passwordController,
+                            obscure: !_showPassword,
+                            suffix: IconButton(
+                              icon: Icon(_showPassword
+                                  ? Icons.visibility_off
+                                  : Icons.visibility),
+                              onPressed: () => setState(
+                                      () => _showPassword = !_showPassword),
+                            ),
+                            validator: (v) => v != null && v.length >= 4
+                                ? null
+                                : 'Mínimo 4 caracteres',
+                          ),
+                          const SizedBox(height: 16),
+
+                          // Confirmar senha
+                          _buildInput(
+                            'Confirmar senha',
+                            controller: _confirmPasswordController,
+                            obscure: !_showConfirmPassword,
+                            suffix: IconButton(
+                              icon: Icon(_showConfirmPassword
+                                  ? Icons.visibility_off
+                                  : Icons.visibility),
+                              onPressed: () => setState(() =>
+                              _showConfirmPassword =
+                              !_showConfirmPassword),
+                            ),
+                            validator: (v) => v == _passwordController.text
+                                ? null
+                                : 'Senhas não coincidem',
+                          ),
+                          const SizedBox(height: 16),
+
+                          // Dropdown de Estado
+                          estadosAsync.when(
+                            data: (estados) => DropdownButtonFormField<Estado>(
+                              value: _estadoSelecionado,
+                              items: estados
+                                  .map(
+                                    (e) => DropdownMenuItem(
+                                  value: e,
+                                  child: Text('${e.nome} (${e.sigla})'),
+                                ),
+                              )
+                                  .toList(),
+                              onChanged: (e) => setState(() {
+                                _estadoSelecionado = e;
+                                _cidadeSelecionada = null;
+                              }),
+                              decoration:
+                              const InputDecoration(labelText: 'Estado'),
+                              validator: (v) =>
+                              v == null ? 'Obrigatório' : null,
+                            ),
+                            loading: () =>
+                            const Center(child: CircularProgressIndicator()),
+                            error: (e, _) => Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text('Erro ao carregar estados: $e'),
+                                TextButton(
+                                  onPressed: () =>
+                                      ref.refresh(estadosProvider),
+                                  child: const Text('Tentar novamente'),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+
+                          // Dropdown de Cidade
+                          cidadesAsync.when(
+                            data: (cidades) => DropdownButtonFormField<Cidade>(
+                              value: _cidadeSelecionada,
+                              items: cidades
+                                  .map(
+                                    (c) => DropdownMenuItem(
+                                  value: c,
+                                  child: Text(c.nome),
+                                ),
+                              )
+                                  .toList(),
+                              onChanged: (c) =>
+                                  setState(() => _cidadeSelecionada = c),
+                              decoration:
+                              const InputDecoration(labelText: 'Cidade'),
+                              validator: (v) =>
+                              v == null ? 'Obrigatório' : null,
+                            ),
+                            loading: () =>
+                            const Center(child: CircularProgressIndicator()),
+                            error: (e, _) => Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text('Erro ao carregar cidades: $e'),
+                                if (_estadoSelecionado != null)
+                                  TextButton(
+                                    onPressed: () => ref.refresh(
+                                        cidadesPorEstadoProvider(
+                                            _estadoSelecionado!.id)),
+                                    child: const Text('Tentar novamente'),
+                                  ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 32),
+
+                          // Botão de registrar
+                          _busy
+                              ? const Center(child: CircularProgressIndicator())
+                              : ElevatedButton(
+                            onPressed: _submit,
+                            child: const Text('Registrar e entrar'),
+                          ),
+
+                          const SizedBox(height: 16),
+                          // Voltar para login
+                          TextButton(
+                            onPressed: () => Navigator
+                                .pushReplacementNamed(context, '/login'),
+                            child: const Text(
+                              'Já tem conta? Entrar',
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
 
-  // ===== Helpers =====
-
-  String? _required(String? value) {
-    return (value == null || value.trim().isEmpty) ? 'Obrigatório' : null;
-  }
-
+  // Helper para inputs
   Widget _buildInput(
-      String label,
-      TextEditingController controller, {
+      String label, {
+        required TextEditingController controller,
         bool obscure = false,
+        Widget? suffix,
         String? Function(String?)? validator,
         TextInputType keyboardType = TextInputType.text,
-        TextCapitalization textCapitalization = TextCapitalization.none,
       }) {
     return TextFormField(
       controller: controller,
-      decoration: InputDecoration(labelText: label),
+      decoration: InputDecoration(
+        labelText: label,
+        suffixIcon: suffix,
+      ),
       obscureText: obscure,
       validator: validator,
       keyboardType: keyboardType,
-      textCapitalization: textCapitalization,
     );
   }
 
+  String? _required(String? v) =>
+      (v == null || v.trim().isEmpty) ? 'Obrigatório' : null;
+
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
-
     setState(() => _busy = true);
+
     try {
-      // Envia os dados de registro
-      await ApiService.instance.client.post(kApiRegistro, data: {
-        'username': _usernameController.text.trim(),
-        'email': _emailController.text.trim(),
-        'password': _passwordController.text,
-        'cidade_id': _cidadeSelecionada?.id,
-      });
-
-      // Faz login automático
-      await ref
-          .read(authProvider.notifier)
-          .login(_usernameController.text.trim(), _passwordController.text);
-
-      if (mounted) {
-        Navigator.pushReplacementNamed(context, '/home');
-      }
+      await ApiService.instance.client.post(
+        kApiRegistro,
+        data: {
+          'username': _usernameController.text.trim(),
+          'email': _emailController.text.trim(),
+          'password': _passwordController.text,
+          'cidade_id': _cidadeSelecionada?.id,
+        },
+      );
+      await ref.read(authProvider.notifier).login(
+        _usernameController.text.trim(),
+        _passwordController.text,
+      );
+      if (mounted) Navigator.pushReplacementNamed(context, '/home');
     } on DioException catch (e) {
-      final msg = e.response?.data.toString() ?? e.message ?? 'Erro desconhecido';
+      final msg = e.response?.data.toString() ??
+          e.message ??
+          'Erro desconhecido';
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Erro: $msg')),
+        );
+      }
+    } catch (e) {
+      // Qualquer outro erro pega aqui
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Ocorreu um erro: $e')),
         );
       }
     } finally {

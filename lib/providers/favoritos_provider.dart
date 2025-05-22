@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/models/local.dart';
 import '../core/services/api_service.dart';
@@ -27,9 +28,10 @@ class FavoritosNotifier extends StateNotifier<AsyncValue<List<Local>>> {
           .where((l) => favList.any((f) => f['local'] == l.id))
           .toList(growable: false);
 
-      // marca isFavorito em cada Local
       for (final l in favoritos) {
         l.isFavorito = true;
+        final fav = favList.firstWhere((f) => f['local'] == l.id);
+        l.favoritoId = fav['id'] as int;
       }
 
       state = AsyncData(favoritos);
@@ -38,12 +40,10 @@ class FavoritosNotifier extends StateNotifier<AsyncValue<List<Local>>> {
     }
   }
 
-  /// Faz o POST ou DELETE mínimo e atualiza só a lista em memória.
   Future<void> toggleFavorito(Local local) async {
     final current = state.value ?? [];
     final already = current.any((l) => l.id == local.id);
 
-    // otimismo: atualiza antes da chamada
     final updated = already
         ? current.where((l) => l.id != local.id).toList()
         : [...current, local..isFavorito = true];
@@ -51,30 +51,54 @@ class FavoritosNotifier extends StateNotifier<AsyncValue<List<Local>>> {
 
     try {
       if (already) {
-        // busca o ID do favorito no backend
-        final resp = await ApiService.instance.client.get(kApiFavoritos);
-        final fav = (resp.data as List)
-            .firstWhere((f) => f['local'] == local.id, orElse: () => null);
-        if (fav != null) {
-          await ApiService.instance
-              .client
-              .delete('$kApiFavoritos${fav['id']}/');
+        if (local.favoritoId != null) {
+          await ApiService.instance.client
+              .delete('$kApiFavoritos${local.favoritoId}/');
+        } else {
+          final resp = await ApiService.instance.client.get(kApiFavoritos);
+          final fav = (resp.data as List)
+              .firstWhere((f) => f['local'] == local.id, orElse: () => null);
+          if (fav != null) {
+            await ApiService.instance.client
+                .delete('$kApiFavoritos${fav['id']}/');
+          }
         }
         local.isFavorito = false;
+        local.favoritoId = null;
       } else {
-        await ApiService.instance.client
-            .post(kApiFavoritos, data: {"local": local.id, "visitado": false});
-        local.isFavorito = true;
+        final resp = await ApiService.instance.client.get(kApiFavoritos);
+        final dup = (resp.data as List)
+            .firstWhere((f) => f['local'] == local.id, orElse: () => null);
+
+        if (dup != null) {
+          local.isFavorito = true;
+          local.favoritoId = dup['id'] as int;
+        } else {
+          final post = await ApiService.instance.client.post(
+            kApiFavoritos,
+            data: {"local": local.id, "visitado": false},
+          );
+          local.isFavorito = true;
+          local.favoritoId = post.data['id'] as int;
+        }
       }
-    } catch (e) {
-      // se falhar, reverte o estado e opcionalmente mostra um SnackBar
+    } on DioException catch (e) {
+      final msg = e.response?.data.toString() ?? '';
+      final dupKey =
+          e.response?.statusCode == 500 && msg.contains('duplicate key');
+
+      if (dupKey) {
+        await fetch();
+        return;
+      }
+
+      state = AsyncData(await _reloadCurrent());
+      rethrow;
+    } catch (_) {
       state = AsyncData(await _reloadCurrent());
       rethrow;
     }
   }
 
-  /// Em caso de erro no toggle, recarrega apenas o array atual do provider
-  Future<List<Local>> _reloadCurrent() async {
-    return state.value!;
-  }
+  Future<List<Local>> _reloadCurrent() async => state.value ?? [];
 }

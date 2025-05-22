@@ -32,13 +32,7 @@ class CreditosScreen extends StatelessWidget {
                 ),
                 const Text('Prof. Dr. Elvio Gilberto da Silva\n', textAlign: TextAlign.center),
                 const Text(
-                  'Professores colaboradores:',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                  textAlign: TextAlign.center,
-                ),
-                const Text('Prof. Dr. Elvio Gilberto da Silva\n', textAlign: TextAlign.center),
-                const Text(
-                  'Integrantes e colaboradores:',
+                  'Integrantes:',
                   style: TextStyle(fontWeight: FontWeight.bold),
                   textAlign: TextAlign.center,
                 ),
@@ -72,7 +66,7 @@ class CreditosScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 32),
                 const Text(
-                  'CulturaLocal – Guia de Pontos Culturais\nDesenvolvido por Victor Carbelotti e colaboradores.\n\n© 2025 – Todos os direitos reservados.',
+                  'CulturaLocal – Guia de Pontos Culturais\n\n© 2025 – Todos os direitos reservados.',
                   textAlign: TextAlign.center,
                 ),
               ],
