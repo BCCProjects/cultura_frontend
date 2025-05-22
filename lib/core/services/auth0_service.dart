@@ -6,19 +6,22 @@ final _storage = FlutterSecureStorage();
 
 const String AUTH0_DOMAIN = 'dev-n8fno2i64s77ybi1.us.auth0.com';
 const String AUTH0_CLIENT_ID = 'pxVUM31u8kEggsqn5RcBuH20eFeKeAKg';
-const String AUTH0_REDIRECT_URI = 'br.unisagrado.cultura://login-callback';
+const String AUTH0_REDIRECT_URI = 'br.edu.unisagrado.cultura:/login-callback';
 const String AUTH0_ISSUER = 'https://dev-n8fno2i64s77ybi1.us.auth0.com';
 
 
 Future<String?> loginWithAuth0() async {
   try {
     final result = await _appAuth.authorizeAndExchangeCode(
-      AuthorizationTokenRequest(
-        AUTH0_CLIENT_ID,
-        AUTH0_REDIRECT_URI,
-        issuer: AUTH0_ISSUER,
-        scopes: ['openid', 'profile', 'email'],
-      ),
+        AuthorizationTokenRequest(
+          AUTH0_CLIENT_ID,
+          AUTH0_REDIRECT_URI,
+          issuer: AUTH0_ISSUER,
+          scopes: ['openid', 'profile', 'email'],
+          additionalParameters: {
+            'connection': 'google-oauth2',
+          },
+        ),
     );
 
     final accessToken = result?.accessToken;

@@ -28,7 +28,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           // Background image
           Positioned.fill(
             child: Image.asset(
-              '/images/screen.png',
+              'assets/images/screen.png',
               fit: BoxFit.cover,
             ),
           ),
@@ -105,17 +105,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         ? const Center(child: CircularProgressIndicator())
                         : ElevatedButton.icon(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.white,
-                        foregroundColor: Colors.black,
+                        backgroundColor: Colors.grey,
+                        foregroundColor: Colors.grey,
                         side: const BorderSide(color: Colors.grey),
                         minimumSize: const Size.fromHeight(48),
                       ),
-                      onPressed: _handleGoogleLogin,
+                      onPressed: null,
                       icon: Image.asset(
-                        'images/google.png',
+                        'assets/images/google.png',
                         height: 24,
                       ),
-                      label: const Text('Entrar com Google'),
+                      label: const Text('Entrar com Google (indisponível)'),
                     ),
                   ],
                 ),

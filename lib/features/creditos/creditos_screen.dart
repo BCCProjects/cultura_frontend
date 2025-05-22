@@ -66,7 +66,7 @@ class CreditosScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 32),
                 const Text(
-                  'CulturaLocal – Guia de Pontos Culturais\n\n© 2025 – Todos os direitos reservados.',
+                  'Cultivi – Guia de Pontos Culturais\n\n© 2025 – Todos os direitos reservados.',
                   textAlign: TextAlign.center,
                 ),
               ],

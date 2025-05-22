@@ -4,9 +4,8 @@
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
 
-        <meta-data android:name="com.google.android.geo.API_KEY" android:value="SUA_API_DO_MAPS_AQUI"/>
+        <meta-data android:name="com.google.android.geo.API_KEY" android:value="AIzaSyBKt89MlhK4qkBO8tJHY5ZSdNPyaKSLrO0"/>
 
-        <!-- MainActivity do Flutter -->
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -16,33 +15,40 @@
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
             android:hardwareAccelerated="true"
             android:windowSoftInputMode="adjustResize">
+
             <meta-data
                 android:name="io.flutter.embedding.android.NormalTheme"
                 android:resource="@style/NormalTheme" />
+
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="br.edu.unisagrado.cultura" android:host="login-callback" />
+            </intent-filter>
+
         </activity>
 
-        <!-- 🔐 Redirect para login Auth0 -->
         <activity android:name="com.linusu.flutter_appauth.RedirectUriReceiverActivity"
             android:exported="true">
             <intent-filter android:label="redirect">
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="com.culturalocal.app" android:host="login-callback" />
+                <data android:scheme="br.edu.unisagrado.cultura" android:host="login-callback" />
             </intent-filter>
         </activity>
 
-        <!-- Flutter Plugin -->
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
     </application>
 
-    <!-- Permissão de query para plugins -->
     <queries>
         <intent>
             <action android:name="android.intent.action.PROCESS_TEXT" />

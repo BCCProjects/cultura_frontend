@@ -55,7 +55,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
         children: [
           // Background image, blur e overlay (igual ao login)
           Positioned.fill(
-            child: Image.asset('images/screen.png', fit: BoxFit.cover),
+            child: Image.asset('assets/images/screen.png', fit: BoxFit.cover),
           ),
           Positioned.fill(
             child: BackdropFilter(

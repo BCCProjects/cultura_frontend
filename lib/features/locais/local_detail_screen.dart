@@ -14,6 +14,12 @@ class LocalDetailScreen extends StatefulWidget {
   State<LocalDetailScreen> createState() => _LocalDetailScreenState();
 }
 
+String _capitalize(String text) {
+  if (text.isEmpty) return text;
+  return text[0].toUpperCase() + text.substring(1);
+}
+
+
 class _LocalDetailScreenState extends State<LocalDetailScreen> {
   int _activeIndex = 0;
 
@@ -126,7 +132,7 @@ class _LocalDetailScreenState extends State<LocalDetailScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildInfoTile('Tipo', local.tipo),
+        _buildInfoTile('Tipo', _capitalize(local.tipo)),
         _buildInfoTile('Descrição', local.descricao),
         if (local.endereco != null) _buildInfoTile('Endereço', local.endereco!),
         if (local.bairro != null) _buildInfoTile('Bairro', local.bairro!),
