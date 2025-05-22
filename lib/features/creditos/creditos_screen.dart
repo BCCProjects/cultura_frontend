@@ -37,7 +37,7 @@ class CreditosScreen extends StatelessWidget {
                   textAlign: TextAlign.center,
                 ),
                 const Text(
-                  'Davi Guilherme Grigolin\nFernando Rafael Lopes Filho\nGisler Antônio Ferrarezi Junior\nItalo Lenharo Thomazete\nVictor Augusto de Mattos Carbelotti\n',
+                  'Davi Guilherme Grigolin\nFernando Rafael Lopes Filho\nGisler Antônio Ferrarezi Junior\nItalo Lenharo Thomazete\nLucas Bocardi Ferreira\nVictor Augusto de Mattos Carbelotti\n',
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 32),
